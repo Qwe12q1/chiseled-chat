@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, MoreVertical, Send, Paperclip, Smile, Mic, Check, CheckCheck } from "lucide-react";
+import { ArrowLeft, MoreVertical, Send, Paperclip, Smile, Mic, Check, CheckCheck, Flag, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ReportModal from "./ReportModal";
 
 interface Message {
   id: string;
@@ -18,6 +19,8 @@ interface ChatViewProps {
   isOnline?: boolean;
   messages: Message[];
   currentUserId: string;
+  otherUserId?: string;
+  isOtherUserBlocked?: boolean;
   onBack: () => void;
   onSendMessage: (content: string) => void;
   remainingMessages?: number;
@@ -31,12 +34,15 @@ const ChatView: React.FC<ChatViewProps> = ({
   isOnline,
   messages,
   currentUserId,
+  otherUserId,
+  isOtherUserBlocked = false,
   onBack,
   onSendMessage,
   remainingMessages = Infinity,
   isSubscribed = false,
 }) => {
   const [newMessage, setNewMessage] = useState("");
+  const [reportMessage, setReportMessage] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -89,9 +95,17 @@ const ChatView: React.FC<ChatViewProps> = ({
         </div>
 
         <div className="flex-1">
-          <h2 className="font-medium text-foreground">{chatName}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-medium text-foreground">{chatName}</h2>
+            {isOtherUserBlocked && (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-destructive/10 rounded-sm text-xs text-destructive">
+                <Ban size={12} />
+                Заблокирован
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">
-            {isOnline ? "в сети" : "был(а) недавно"}
+            {isOtherUserBlocked ? "Пользователь заблокирован" : isOnline ? "в сети" : "был(а) недавно"}
           </p>
         </div>
 
@@ -161,6 +175,19 @@ const ChatView: React.FC<ChatViewProps> = ({
                         )
                       )}
                     </div>
+
+                    {/* Report button for other's messages */}
+                    {!isOwn && (
+                      <motion.button
+                        initial={{ opacity: 0 }}
+                        whileHover={{ scale: 1.1 }}
+                        className="absolute -right-8 top-1/2 -translate-y-1/2 p-1.5 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all"
+                        onClick={() => setReportMessage(message)}
+                        title="Пожаловаться"
+                      >
+                        <Flag size={14} className="text-muted-foreground hover:text-destructive" />
+                      </motion.button>
+                    )}
                   </div>
                 </motion.div>
               </React.Fragment>
@@ -236,6 +263,19 @@ const ChatView: React.FC<ChatViewProps> = ({
           )}
         </div>
       </form>
+
+      {/* Report Modal */}
+      {reportMessage && otherUserId && (
+        <ReportModal
+          isOpen={!!reportMessage}
+          onClose={() => setReportMessage(null)}
+          messageId={reportMessage.id}
+          messageContent={reportMessage.content}
+          reportedUserId={otherUserId}
+          chatId={chatId}
+          reporterId={currentUserId}
+        />
+      )}
     </div>
   );
 };

@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_at: string
+          id: string
+          reason: string | null
+          report_id: string | null
+          user_id: string
+        }
+        Insert: {
+          blocked_at?: string
+          id?: string
+          reason?: string | null
+          report_id?: string | null
+          user_id: string
+        }
+        Update: {
+          blocked_at?: string
+          id?: string
+          reason?: string | null
+          report_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_members: {
         Row: {
           chat_id: string
@@ -122,6 +154,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           id: string
+          is_blocked: boolean
           last_seen: string | null
           name: string
           phone: string
@@ -132,6 +165,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id: string
+          is_blocked?: boolean
           last_seen?: string | null
           name: string
           phone: string
@@ -142,6 +176,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
+          is_blocked?: boolean
           last_seen?: string | null
           name?: string
           phone?: string
@@ -149,6 +184,63 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          ai_confidence: number | null
+          ai_verdict: string | null
+          chat_id: string
+          created_at: string
+          id: string
+          message_id: string
+          reason: string | null
+          reported_user_id: string
+          reporter_id: string
+          resolved_at: string | null
+          status: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_verdict?: string | null
+          chat_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          reason?: string | null
+          reported_user_id: string
+          reporter_id: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_verdict?: string | null
+          chat_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          reason?: string | null
+          reported_user_id?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

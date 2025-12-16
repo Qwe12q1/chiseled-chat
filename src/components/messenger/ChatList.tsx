@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, Settings, User } from "lucide-react";
+import { Search, Plus, Settings, User, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Chat {
@@ -11,6 +11,7 @@ interface Chat {
   unread: number;
   avatar?: string;
   online?: boolean;
+  isOtherUserBlocked?: boolean;
 }
 
 interface ChatListProps {
@@ -122,8 +123,16 @@ const ChatList: React.FC<ChatListProps> = ({
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-foreground truncate">{chat.name}</span>
-                  <span className="text-xs text-muted-foreground">{chat.time}</span>
+                  <div className="flex items-center gap-2 truncate">
+                    <span className="font-medium text-foreground truncate">{chat.name}</span>
+                    {chat.isOtherUserBlocked && (
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-destructive/10 rounded-sm text-[10px] text-destructive flex-shrink-0">
+                        <Ban size={10} />
+                        Бан
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">{chat.time}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
