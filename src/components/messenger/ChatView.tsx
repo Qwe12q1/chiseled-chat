@@ -71,26 +71,37 @@ const ChatView: React.FC<ChatViewProps> = ({
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="flex items-center gap-3 p-4 border-b border-border bg-card"
+      >
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.1, x: -2 }}
+          whileTap={{ scale: 0.9 }}
           onClick={onBack}
-          className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300 md:hidden"
+          className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300 md:hidden"
         >
           <ArrowLeft size={20} className="text-foreground" />
         </motion.button>
 
         <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground font-display">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            className="w-11 h-11 rounded-2xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center text-foreground font-display overflow-hidden shadow-sm"
+          >
             {chatAvatar ? (
-              <img src={chatAvatar} alt={chatName} className="w-full h-full rounded-full object-cover" />
+              <img src={chatAvatar} alt={chatName} className="w-full h-full object-cover" />
             ) : (
               chatName.charAt(0).toUpperCase()
             )}
-          </div>
+          </motion.div>
           {isOnline && (
-            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-card" />
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-card shadow-sm" 
+            />
           )}
         </div>
 
@@ -98,10 +109,14 @@ const ChatView: React.FC<ChatViewProps> = ({
           <div className="flex items-center gap-2">
             <h2 className="font-medium text-foreground">{chatName}</h2>
             {isOtherUserBlocked && (
-              <span className="flex items-center gap-1 px-2 py-0.5 bg-destructive/10 rounded-sm text-xs text-destructive">
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center gap-1 px-2.5 py-1 bg-destructive/15 rounded-xl text-xs text-destructive font-medium"
+              >
                 <Ban size={12} />
                 Заблокирован
-              </span>
+              </motion.span>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
@@ -110,13 +125,14 @@ const ChatView: React.FC<ChatViewProps> = ({
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
         >
           <MoreVertical size={20} className="text-muted-foreground" />
         </motion.button>
-      </div>
+      </motion.div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -129,31 +145,36 @@ const ChatView: React.FC<ChatViewProps> = ({
             return (
               <React.Fragment key={message.id}>
                 {showDate && (
-                  <div className="flex justify-center my-4">
-                    <span className="px-3 py-1 bg-secondary rounded-full text-xs text-muted-foreground">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex justify-center my-4"
+                  >
+                    <span className="px-4 py-1.5 bg-secondary/80 backdrop-blur-sm rounded-2xl text-xs text-muted-foreground shadow-sm">
                       {new Intl.DateTimeFormat("ru", { 
                         day: "numeric", 
                         month: "long" 
                       }).format(new Date(message.timestamp))}
                     </span>
-                  </div>
+                  </motion.div>
                 )}
                 <motion.div
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   className={cn(
                     "flex",
                     isOwn ? "justify-end" : "justify-start"
                   )}
                 >
-                  <div
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
                     className={cn(
-                      "max-w-[75%] px-4 py-2 rounded-sm relative group",
+                      "max-w-[75%] px-4 py-2.5 relative group shadow-sm",
                       isOwn
-                        ? "bg-foreground text-primary-foreground"
-                        : "bg-secondary text-foreground"
+                        ? "bg-foreground text-primary-foreground rounded-3xl rounded-br-lg"
+                        : "bg-secondary text-foreground rounded-3xl rounded-bl-lg"
                     )}
                   >
                     <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
@@ -179,16 +200,17 @@ const ChatView: React.FC<ChatViewProps> = ({
                     {/* Report button for other's messages */}
                     {!isOwn && (
                       <motion.button
-                        initial={{ opacity: 0 }}
-                        whileHover={{ scale: 1.1 }}
-                        className="absolute -right-8 top-1/2 -translate-y-1/2 p-1.5 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-all"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="absolute -right-9 top-1/2 -translate-y-1/2 p-2 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-destructive/15 transition-all duration-200"
                         onClick={() => setReportMessage(message)}
                         title="Пожаловаться"
                       >
-                        <Flag size={14} className="text-muted-foreground hover:text-destructive" />
+                        <Flag size={14} className="text-muted-foreground hover:text-destructive transition-colors" />
                       </motion.button>
                     )}
-                  </div>
+                  </motion.div>
                 </motion.div>
               </React.Fragment>
             );
@@ -198,25 +220,34 @@ const ChatView: React.FC<ChatViewProps> = ({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-card">
+      <motion.form 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        onSubmit={handleSubmit} 
+        className="p-4 border-t border-border bg-card"
+      >
         {!isSubscribed && remainingMessages !== Infinity && (
-          <div className={cn(
-            "mb-3 px-3 py-2 rounded-sm text-xs text-center",
-            remainingMessages <= 2
-              ? "bg-destructive/10 text-destructive"
-              : "bg-secondary text-muted-foreground"
-          )}>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              "mb-3 px-4 py-2.5 rounded-2xl text-xs text-center",
+              remainingMessages <= 2
+                ? "bg-destructive/15 text-destructive"
+                : "bg-secondary text-muted-foreground"
+            )}
+          >
             {remainingMessages > 0
               ? `Осталось сообщений сегодня: ${remainingMessages}`
               : "Лимит сообщений исчерпан. Оформите подписку."}
-          </div>
+          </motion.div>
         )}
         <div className="flex items-center gap-2">
           <motion.button
             type="button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
+            whileHover={{ scale: 1.15, rotate: 15 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
           >
             <Paperclip size={20} className="text-muted-foreground" />
           </motion.button>
@@ -228,41 +259,51 @@ const ChatView: React.FC<ChatViewProps> = ({
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Написать сообщение..."
               disabled={remainingMessages === 0}
-              className="w-full h-11 px-4 bg-input border border-border rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 px-5 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein focus:ring-2 focus:ring-marble-vein/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           <motion.button
             type="button"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
+            whileHover={{ scale: 1.15, rotate: -10 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
           >
             <Smile size={20} className="text-muted-foreground" />
           </motion.button>
 
-          {newMessage.trim() ? (
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              disabled={remainingMessages === 0}
-              className="p-2 rounded-sm bg-foreground text-primary-foreground hover:bg-marble-vein transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send size={20} />
-            </motion.button>
-          ) : (
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
-            >
-              <Mic size={20} className="text-muted-foreground" />
-            </motion.button>
-          )}
+          <AnimatePresence mode="wait">
+            {newMessage.trim() ? (
+              <motion.button
+                key="send"
+                type="submit"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, rotate: 180 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                disabled={remainingMessages === 0}
+                className="p-3 rounded-2xl bg-foreground text-primary-foreground hover:bg-marble-vein transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              >
+                <Send size={20} />
+              </motion.button>
+            ) : (
+              <motion.button
+                key="mic"
+                type="button"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
+              >
+                <Mic size={20} className="text-muted-foreground" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
-      </form>
+      </motion.form>
 
       {/* Report Modal */}
       {reportMessage && otherUserId && (
