@@ -20,6 +20,8 @@ interface Chat {
   unread: number;
   avatar?: string;
   online?: boolean;
+  otherUserId?: string;
+  isOtherUserBlocked?: boolean;
 }
 
 interface Message {
@@ -91,16 +93,22 @@ const Messenger: React.FC = () => {
         
         // Get other member for private chats
         let chatName = chat.name;
+        let otherUserId: string | undefined;
+        let isOtherUserBlocked = false;
+        
         if (chat.type === "private") {
           const { data: members } = await supabase
             .from("chat_members")
-            .select("user_id, profiles(name)")
+            .select("user_id, profiles(name, is_blocked)")
             .eq("chat_id", chat.id)
             .neq("user_id", user.id)
             .limit(1);
           
           if (members && members[0]) {
-            chatName = (members[0] as any).profiles?.name || "Unknown";
+            const member = members[0] as any;
+            chatName = member.profiles?.name || "Unknown";
+            otherUserId = member.user_id;
+            isOtherUserBlocked = member.profiles?.is_blocked || false;
           }
         }
 
@@ -119,6 +127,8 @@ const Messenger: React.FC = () => {
           lastMessage: lastMsg?.content || "Нет сообщений",
           time: lastMsg ? formatTime(new Date(lastMsg.created_at)) : "",
           unread: 0,
+          otherUserId,
+          isOtherUserBlocked,
         };
       });
 
@@ -295,6 +305,8 @@ const Messenger: React.FC = () => {
             isOnline={selectedChat.online}
             messages={messages}
             currentUserId={user?.id || ""}
+            otherUserId={selectedChat.otherUserId}
+            isOtherUserBlocked={selectedChat.isOtherUserBlocked}
             onBack={() => setSelectedChatId(null)}
             onSendMessage={handleSendMessage}
             remainingMessages={remainingMessages}
