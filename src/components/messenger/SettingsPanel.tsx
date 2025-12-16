@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Moon, Bell, Lock, HelpCircle, LogOut, ChevronRight } from "lucide-react";
+import { X, Moon, Bell, Lock, HelpCircle, LogOut, ChevronRight, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useSubscription } from "@/hooks/useSubscription";
+import SubscriptionPanel from "./SubscriptionPanel";
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -12,6 +14,8 @@ interface SettingsPanelProps {
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const { isSubscribed, remainingMessages } = useSubscription();
+  const [showSubscription, setShowSubscription] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -61,6 +65,33 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
               </motion.button>
             </div>
 
+            {/* Subscription banner */}
+            <motion.button
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={() => setShowSubscription(true)}
+              className={`mx-4 mt-4 p-4 rounded-sm border transition-all duration-300 ${
+                isSubscribed
+                  ? "bg-amber-500/10 border-amber-500/20"
+                  : "bg-secondary border-border hover:border-amber-500/50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Crown className={isSubscribed ? "text-amber-500" : "text-muted-foreground"} size={24} />
+                <div className="flex-1 text-left">
+                  <p className={`font-medium ${isSubscribed ? "text-amber-500" : "text-foreground"}`}>
+                    {isSubscribed ? "Premium активен" : "Получить Premium"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isSubscribed
+                      ? "Безлимитные сообщения"
+                      : `Осталось ${remainingMessages} сообщений сегодня`}
+                  </p>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground" />
+              </div>
+            </motion.button>
+
             {/* Settings list */}
             <div className="p-4 space-y-2">
               {settingsItems.map((item, index) => (
@@ -101,6 +132,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
               </p>
             </div>
           </motion.div>
+
+          <SubscriptionPanel
+            isOpen={showSubscription}
+            onClose={() => setShowSubscription(false)}
+          />
         </>
       )}
     </AnimatePresence>

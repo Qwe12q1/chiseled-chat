@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import ChatList from "@/components/messenger/ChatList";
 import ChatView from "@/components/messenger/ChatView";
 import EmptyChat from "@/components/messenger/EmptyChat";
@@ -30,6 +32,7 @@ interface Message {
 
 const Messenger: React.FC = () => {
   const { user, loading } = useAuth();
+  const { canSendMessage, remainingMessages, incrementMessageCount, isSubscribed } = useSubscription();
   const navigate = useNavigate();
   
   const [chats, setChats] = useState<Chat[]>([]);
@@ -181,11 +184,22 @@ const Messenger: React.FC = () => {
   const handleSendMessage = async (content: string) => {
     if (!user || !selectedChatId) return;
 
-    await supabase.from("messages").insert({
+    if (!canSendMessage) {
+      toast.error("Лимит сообщений исчерпан", {
+        description: "Оформите подписку для безлимитных сообщений",
+      });
+      return;
+    }
+
+    const { error } = await supabase.from("messages").insert({
       chat_id: selectedChatId,
       sender_id: user.id,
       content,
     });
+
+    if (!error && !isSubscribed) {
+      await incrementMessageCount();
+    }
   };
 
   const handleCreateChat = async (otherUserId: string) => {
@@ -283,6 +297,8 @@ const Messenger: React.FC = () => {
             currentUserId={user?.id || ""}
             onBack={() => setSelectedChatId(null)}
             onSendMessage={handleSendMessage}
+            remainingMessages={remainingMessages}
+            isSubscribed={isSubscribed}
           />
         ) : (
           <EmptyChat />

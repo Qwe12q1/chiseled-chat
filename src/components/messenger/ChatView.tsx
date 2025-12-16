@@ -20,6 +20,8 @@ interface ChatViewProps {
   currentUserId: string;
   onBack: () => void;
   onSendMessage: (content: string) => void;
+  remainingMessages?: number;
+  isSubscribed?: boolean;
 }
 
 const ChatView: React.FC<ChatViewProps> = ({
@@ -31,6 +33,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   currentUserId,
   onBack,
   onSendMessage,
+  remainingMessages = Infinity,
+  isSubscribed = false,
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -168,6 +172,18 @@ const ChatView: React.FC<ChatViewProps> = ({
 
       {/* Input */}
       <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-card">
+        {!isSubscribed && remainingMessages !== Infinity && (
+          <div className={cn(
+            "mb-3 px-3 py-2 rounded-sm text-xs text-center",
+            remainingMessages <= 2
+              ? "bg-destructive/10 text-destructive"
+              : "bg-secondary text-muted-foreground"
+          )}>
+            {remainingMessages > 0
+              ? `Осталось сообщений сегодня: ${remainingMessages}`
+              : "Лимит сообщений исчерпан. Оформите подписку."}
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <motion.button
             type="button"
@@ -184,7 +200,8 @@ const ChatView: React.FC<ChatViewProps> = ({
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Написать сообщение..."
-              className="w-full h-11 px-4 bg-input border border-border rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300"
+              disabled={remainingMessages === 0}
+              className="w-full h-11 px-4 bg-input border border-border rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -202,7 +219,8 @@ const ChatView: React.FC<ChatViewProps> = ({
               type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-sm bg-foreground text-primary-foreground hover:bg-marble-vein transition-colors duration-300"
+              disabled={remainingMessages === 0}
+              className="p-2 rounded-sm bg-foreground text-primary-foreground hover:bg-marble-vein transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={20} />
             </motion.button>
