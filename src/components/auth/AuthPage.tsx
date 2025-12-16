@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuxuryInput } from "@/components/ui/LuxuryInput";
 import { LuxuryButton } from "@/components/ui/LuxuryButton";
-import { Phone, User, Lock, Eye, EyeOff } from "lucide-react";
+import { Phone, User, Lock, Eye, EyeOff, Mail } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 type AuthMode = "login" | "register";
 
@@ -10,17 +13,59 @@ const AuthPage: React.FC = () => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  
+  const { signIn, signUp, user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/messenger");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
-  };
 
-  const toggleMode = () => {
-    setMode(mode === "login" ? "register" : "login");
+    try {
+      if (mode === "login") {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({
+            title: "Ошибка входа",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        const { error } = await signUp(email, password, { name, phone });
+        if (error) {
+          toast({
+            title: "Ошибка регистрации",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Успешная регистрация",
+            description: "Добро пожаловать в NOIR",
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Произошла непредвиденная ошибка",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const containerVariants = {
@@ -153,21 +198,38 @@ const AuthPage: React.FC = () => {
             >
               <motion.div variants={itemVariants}>
                 <LuxuryInput
-                  label="Телефон"
-                  type="tel"
-                  icon={<Phone size={18} />}
-                  placeholder="+7 (999) 999-99-99"
+                  label="Email"
+                  type="email"
+                  icon={<Mail size={18} />}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </motion.div>
 
               {mode === "register" && (
-                <motion.div variants={itemVariants}>
-                  <LuxuryInput
-                    label="Имя"
-                    type="text"
-                    icon={<User size={18} />}
-                  />
-                </motion.div>
+                <>
+                  <motion.div variants={itemVariants}>
+                    <LuxuryInput
+                      label="Имя"
+                      type="text"
+                      icon={<User size={18} />}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                  </motion.div>
+                  <motion.div variants={itemVariants}>
+                    <LuxuryInput
+                      label="Телефон"
+                      type="tel"
+                      icon={<Phone size={18} />}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+7 (999) 999-99-99"
+                    />
+                  </motion.div>
+                </>
               )}
 
               <motion.div variants={itemVariants} className="relative">
@@ -175,6 +237,9 @@ const AuthPage: React.FC = () => {
                   label="Пароль"
                   type={showPassword ? "text" : "password"}
                   icon={<Lock size={18} />}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
                 <button
                   type="button"
@@ -215,7 +280,7 @@ const AuthPage: React.FC = () => {
               <>
                 Нет аккаунта?{" "}
                 <button
-                  onClick={toggleMode}
+                  onClick={() => setMode("register")}
                   className="text-foreground hover:text-marble-vein transition-colors duration-300 tracking-wider"
                 >
                   Зарегистрироваться
@@ -225,7 +290,7 @@ const AuthPage: React.FC = () => {
               <>
                 Уже есть аккаунт?{" "}
                 <button
-                  onClick={toggleMode}
+                  onClick={() => setMode("login")}
                   className="text-foreground hover:text-marble-vein transition-colors duration-300 tracking-wider"
                 >
                   Войти
