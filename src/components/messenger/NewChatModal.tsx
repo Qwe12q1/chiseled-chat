@@ -63,22 +63,27 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-x-4 top-[10%] md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md bg-card border border-border rounded-sm shadow-2xl z-50 overflow-hidden"
+            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed inset-x-4 top-[10%] md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md bg-card border border-border rounded-3xl shadow-2xl z-50 overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="font-display text-lg tracking-wider text-foreground">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <motion.h2 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="font-display text-lg tracking-wider text-foreground"
+              >
                 Новый чат
-              </h2>
+              </motion.h2>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
+                className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
               >
                 <X size={20} className="text-muted-foreground" />
               </motion.button>
@@ -86,16 +91,21 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
 
             {/* Search */}
             <div className="p-4">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <motion.div 
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="relative"
+              >
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Поиск по имени или телефону..."
-                  className="w-full h-10 pl-10 pr-4 bg-input border border-border rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300"
+                  className="w-full h-12 pl-11 pr-4 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein focus:ring-2 focus:ring-marble-vein/20 transition-all duration-300"
                 />
-              </div>
+              </motion.div>
             </div>
 
             {/* Users list */}
@@ -112,20 +122,27 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
                   </p>
                 </div>
               ) : (
-                filteredUsers.map((profile) => (
+                filteredUsers.map((profile, index) => (
                   <motion.div
                     key={profile.id}
-                    whileHover={{ backgroundColor: "hsl(var(--secondary))" }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02, x: 4, backgroundColor: "hsl(var(--secondary))" }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => onCreateChat(profile.id)}
-                    className="flex items-center gap-3 p-4 cursor-pointer transition-colors duration-300 border-b border-border/50"
+                    className="flex items-center gap-3 p-4 mx-2 mb-1 cursor-pointer transition-all duration-300 rounded-2xl"
                   >
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-foreground font-display text-lg">
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }}
+                      className="w-12 h-12 rounded-2xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center text-foreground font-display text-lg overflow-hidden shadow-sm"
+                    >
                       {profile.avatar_url ? (
-                        <img src={profile.avatar_url} alt={profile.name} className="w-full h-full rounded-full object-cover" />
+                        <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
                       ) : (
                         profile.name.charAt(0).toUpperCase()
                       )}
-                    </div>
+                    </motion.div>
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{profile.name}</p>
                       <p className="text-sm text-muted-foreground">{profile.phone}</p>
