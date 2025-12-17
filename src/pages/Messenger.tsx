@@ -238,12 +238,24 @@ const Messenger: React.FC = () => {
 
     const loadingToastId = toast.loading("Создаём чат...");
 
-    // Create new chat
+    // Ensure we have an auth session (RLS relies on auth.uid())
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    const authUserId = authData?.user?.id;
+
+    if (authError || !authUserId) {
+      console.error("handleCreateChat: authError", authError);
+      toast.error("Сессия не найдена", {
+        id: loadingToastId,
+        description: "Выйдите и войдите заново, затем попробуйте снова",
+      });
+      return;
+    }
+
+    // Create new chat (created_by will be set by DB default = auth.uid())
     const { data: newChat, error: chatError } = await supabase
       .from("chats")
       .insert({
         type: "private",
-        created_by: user.id,
       })
       .select()
       .single();
@@ -260,7 +272,7 @@ const Messenger: React.FC = () => {
     // IMPORTANT: insert memberships sequentially to satisfy RLS
     const { error: selfMemberError } = await supabase.from("chat_members").insert({
       chat_id: newChat.id,
-      user_id: user.id,
+      user_id: authUserId,
       role: "admin",
     });
 
