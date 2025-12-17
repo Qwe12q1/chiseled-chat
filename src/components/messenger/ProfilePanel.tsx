@@ -116,7 +116,7 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({ isOpen, onClose }) => {
               </div>
               
               <p className="text-xs text-muted-foreground tracking-wider mb-8">
-                {user?.email}
+                {phone || "Телефон не указан"}
               </p>
             </div>
 
