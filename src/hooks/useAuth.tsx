@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (phone: string, password: string, metadata?: { name?: string; username?: string | null }) => Promise<{ error: Error | null }>;
+  signUp: (phone: string, password: string, metadata?: { name?: string }) => Promise<{ error: Error | null }>;
   signIn: (phone: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (phone: string, password: string, metadata?: { name?: string; username?: string | null }) => {
+  const signUp = async (phone: string, password: string, metadata?: { name?: string }) => {
     const redirectUrl = `${window.location.origin}/`;
     const email = phoneToEmail(phone);
     
