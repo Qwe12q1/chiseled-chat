@@ -6,10 +6,16 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, metadata?: { name?: string; phone?: string }) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (phone: string, password: string, metadata?: { name?: string }) => Promise<{ error: Error | null }>;
+  signIn: (phone: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
+
+// Helper to convert phone to fake email for Supabase auth
+const phoneToEmail = (phone: string): string => {
+  const sanitized = phone.replace(/\D/g, "");
+  return `${sanitized}@noir.local`;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -38,21 +44,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, metadata?: { name?: string; phone?: string }) => {
+  const signUp = async (phone: string, password: string, metadata?: { name?: string }) => {
     const redirectUrl = `${window.location.origin}/`;
+    const email = phoneToEmail(phone);
     
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: metadata
+        data: { ...metadata, phone }
       }
     });
     return { error };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (phone: string, password: string) => {
+    const email = phoneToEmail(phone);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
