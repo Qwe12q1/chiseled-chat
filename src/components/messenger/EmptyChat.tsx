@@ -15,7 +15,7 @@ const EmptyChat: React.FC = () => {
           <MessageSquare size={40} className="text-muted-foreground" />
         </div>
         <h2 className="font-display text-2xl text-foreground mb-2 tracking-wider">
-          NOIR Messenger
+          MAX Core
         </h2>
         <p className="text-muted-foreground text-sm max-w-sm">
           Выберите чат из списка слева или начните новый разговор

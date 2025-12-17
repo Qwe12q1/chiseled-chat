@@ -128,7 +128,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
             {/* Version */}
             <div className="absolute bottom-20 left-0 right-0 text-center">
               <p className="text-xs text-muted-foreground/50 tracking-wider">
-                NOIR Messenger v1.0
+                MAX Core v1.0
               </p>
             </div>
           </motion.div>
