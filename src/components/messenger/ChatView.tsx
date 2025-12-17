@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, MoreVertical, Send, Paperclip, Smile, Mic, Check, CheckCheck, Flag, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReportModal from "./ReportModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Message {
   id: string;
@@ -43,7 +49,13 @@ const ChatView: React.FC<ChatViewProps> = ({
 }) => {
   const [newMessage, setNewMessage] = useState("");
   const [reportMessage, setReportMessage] = useState<Message | null>(null);
+  const [showReportFromMenu, setShowReportFromMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Get last message from other user for reporting from menu
+  const lastOtherUserMessage = messages
+    .filter(m => m.senderId !== currentUserId)
+    .slice(-1)[0];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -124,14 +136,32 @@ const ChatView: React.FC<ChatViewProps> = ({
           </p>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.1, rotate: 90 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
-        >
-          <MoreVertical size={20} className="text-muted-foreground" />
-        </motion.button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
+            >
+              <MoreVertical size={20} className="text-muted-foreground" />
+            </motion.button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 rounded-2xl">
+            {otherUserId && lastOtherUserMessage && (
+              <DropdownMenuItem 
+                onClick={() => {
+                  setReportMessage(lastOtherUserMessage);
+                  setShowReportFromMenu(true);
+                }}
+                className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer rounded-xl"
+              >
+                <Flag size={16} />
+                Пожаловаться
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </motion.div>
 
       {/* Messages */}
