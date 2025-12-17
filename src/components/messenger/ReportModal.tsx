@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle, Send } from "lucide-react";
@@ -33,9 +33,69 @@ const ReportModal: React.FC<ReportModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const portalRootRef = useRef<HTMLDivElement | null>(null);
+  const restoreRootStylesRef = useRef<null | (() => void)>(null);
+
   useEffect(() => {
     setMounted(true);
+
+    // Create a dedicated portal root so layout/styling is fully controlled.
+    const root = document.createElement("div");
+    root.setAttribute("data-report-modal-root", "");
+    root.style.position = "fixed";
+    root.style.inset = "0";
+    root.style.zIndex = "9999";
+    root.style.pointerEvents = "auto";
+    root.style.transform = "none";
+
+    document.body.appendChild(root);
+    portalRootRef.current = root;
+
+    return () => {
+      root.remove();
+      portalRootRef.current = null;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Hard guarantee: if html/body are transformed/scaled, fixed centering can drift.
+    // We temporarily neutralize these while the modal is open.
+    if (!isOpen) {
+      restoreRootStylesRef.current?.();
+      restoreRootStylesRef.current = null;
+      return;
+    }
+
+    const html = document.documentElement;
+    const body = document.body;
+
+    const prev = {
+      htmlTransform: html.style.transform,
+      bodyTransform: body.style.transform,
+      // `zoom` is non-standard but can exist in some setups.
+      htmlZoom: (html.style as any).zoom as string | undefined,
+      bodyZoom: (body.style as any).zoom as string | undefined,
+    };
+
+    html.style.transform = "none";
+    body.style.transform = "none";
+    (html.style as any).zoom = "1";
+    (body.style as any).zoom = "1";
+
+    restoreRootStylesRef.current = () => {
+      html.style.transform = prev.htmlTransform;
+      body.style.transform = prev.bodyTransform;
+      (html.style as any).zoom = prev.htmlZoom ?? "";
+      (body.style as any).zoom = prev.bodyZoom ?? "";
+    };
+
+    return () => {
+      restoreRootStylesRef.current?.();
+      restoreRootStylesRef.current = null;
+    };
+  }, [isOpen, mounted]);
 
   const handleSubmit = async () => {
     if (!selectedReason) {
@@ -81,24 +141,43 @@ const ReportModal: React.FC<ReportModalProps> = ({
   };
 
   if (!mounted) return null;
+  if (!portalRootRef.current) return null;
 
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
+        <div
+          // Fullscreen wrapper controlled entirely here (no translate centering).
+          className="fixed inset-0 z-[9999]"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            pointerEvents: "auto",
+            transform: "none",
+          }}
+        >
+          <motion.button
+            type="button"
+            aria-label="Закрыть окно жалобы"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9998]"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            style={{ transform: "none" }}
           />
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+          <motion.section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Пожаловаться"
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl z-[9999] overflow-hidden flex flex-col"
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="relative w-full max-w-md max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            style={{ transform: "none" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -175,11 +254,11 @@ const ReportModal: React.FC<ReportModalProps> = ({
                 Жалоба будет проверена AI-модерацией
               </p>
             </div>
-          </motion.div>
-        </>
+          </motion.section>
+        </div>
       )}
     </AnimatePresence>,
-    document.body
+    portalRootRef.current
   );
 };
 
