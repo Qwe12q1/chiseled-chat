@@ -79,7 +79,7 @@ const Messenger: React.FC = () => {
       .select(
         `
         chat_id,
-        chats (
+        chats!chat_members_chat_id_fkey (
           id,
           name,
           type,
@@ -109,7 +109,7 @@ const Messenger: React.FC = () => {
         if (chat.type === "private") {
           const { data: members, error: membersError } = await supabase
             .from("chat_members")
-            .select("user_id, profiles(name, is_blocked)")
+            .select("user_id, profiles!chat_members_user_id_profiles_fkey(name, is_blocked)")
             .eq("chat_id", chat.id)
             .neq("user_id", user.id)
             .limit(1);
