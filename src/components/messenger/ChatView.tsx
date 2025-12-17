@@ -133,7 +133,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           </p>
         </div>
 
-        {!isOtherUserBlocked && (
+        {!isOtherUserBlocked && otherUserId && otherUserHasMessages && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <motion.button
@@ -146,15 +146,13 @@ const ChatView: React.FC<ChatViewProps> = ({
               </motion.button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 rounded-2xl">
-              {otherUserId && otherUserHasMessages && (
-                <DropdownMenuItem 
-                  onClick={() => setShowReport(true)}
-                  className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer rounded-xl"
-                >
-                  <Flag size={16} />
-                  Пожаловаться
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem 
+                onClick={() => setShowReport(true)}
+                className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer rounded-xl"
+              >
+                <Flag size={16} />
+                Пожаловаться
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
