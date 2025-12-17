@@ -33,7 +33,7 @@ const LuxuryButton: React.FC<LuxuryButtonProps> = ({
       onClick={onClick}
       disabled={disabled || isLoading}
       className={cn(
-        "relative w-full h-14 rounded-sm overflow-hidden",
+        "relative w-full h-14 rounded-2xl overflow-hidden",
         "tracking-[0.25em] uppercase text-xs font-medium font-body",
         "transition-all duration-500 ease-out",
         "disabled:opacity-50 disabled:cursor-not-allowed",
