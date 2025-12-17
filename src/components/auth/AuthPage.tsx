@@ -7,6 +7,7 @@ import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthMode = "login" | "register";
 
@@ -52,6 +53,25 @@ const AuthPage: React.FC = () => {
           setIsLoading(false);
           return;
         }
+        
+        // Check if phone already exists in profiles
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("phone", phone)
+          .maybeSingle();
+          
+        if (existingProfile) {
+          setMode("login");
+          toast({
+            title: "Аккаунт уже существует",
+            description: "Этот номер уже зарегистрирован. Войдите в систему.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         const { error } = await signUp(phone, password, { name });
         if (error) {
           const msg = error.message || "";
