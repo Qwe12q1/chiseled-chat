@@ -262,23 +262,19 @@ const Messenger: React.FC = () => {
       return;
     }
 
-    // Create new chat
-    const { data: newChat, error: chatError } = await supabase
-      .from("chats")
-      .insert({
-        type: "private",
-        created_by: authUserId,
-      })
-      .select()
-      .single();
+    // Create chat + members atomically via backend function (avoids RLS multi-step failures)
+    const { data: chatId, error: rpcError } = await (supabase as any).rpc(
+      "create_private_chat",
+      { other_user_id: otherUserId }
+    );
 
-    if (chatError || !newChat) {
-      console.error("handleCreateChat: chatError", chatError);
+    if (rpcError || !chatId) {
+      console.error("handleCreateChat: rpcError", rpcError);
       const details = [
-        chatError?.message,
-        (chatError as any)?.details,
-        (chatError as any)?.hint,
-        (chatError as any)?.code,
+        rpcError?.message,
+        (rpcError as any)?.details,
+        (rpcError as any)?.hint,
+        (rpcError as any)?.code,
       ]
         .filter(Boolean)
         .join(" • ");
@@ -290,40 +286,9 @@ const Messenger: React.FC = () => {
       return;
     }
 
-    // IMPORTANT: insert memberships sequentially to satisfy RLS
-    const { error: selfMemberError } = await supabase.from("chat_members").insert({
-      chat_id: newChat.id,
-      user_id: authUserId,
-      role: "admin",
-    });
-
-    if (selfMemberError) {
-      console.error("handleCreateChat: selfMemberError", selfMemberError);
-      toast.error("Не удалось добавить вас в чат", {
-        id: loadingToastId,
-        description: selfMemberError.message,
-      });
-      return;
-    }
-
-    const { error: otherMemberError } = await supabase.from("chat_members").insert({
-      chat_id: newChat.id,
-      user_id: otherUserId,
-      role: "member",
-    });
-
-    if (otherMemberError) {
-      console.error("handleCreateChat: otherMemberError", otherMemberError);
-      toast.error("Не удалось добавить собеседника", {
-        id: loadingToastId,
-        description: otherMemberError.message,
-      });
-      return;
-    }
-
     setShowNewChat(false);
     await fetchChats();
-    setSelectedChatId(newChat.id);
+    setSelectedChatId(chatId);
 
     toast.success("Чат создан", { id: loadingToastId });
   };
