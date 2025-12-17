@@ -48,14 +48,11 @@ const ChatView: React.FC<ChatViewProps> = ({
   isSubscribed = false,
 }) => {
   const [newMessage, setNewMessage] = useState("");
-  const [reportMessage, setReportMessage] = useState<Message | null>(null);
-  const [showReportFromMenu, setShowReportFromMenu] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Get last message from other user for reporting from menu
-  const lastOtherUserMessage = messages
-    .filter(m => m.senderId !== currentUserId)
-    .slice(-1)[0];
+  // Check if other user has sent any messages
+  const otherUserHasMessages = messages.some(m => m.senderId !== currentUserId);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -148,12 +145,9 @@ const ChatView: React.FC<ChatViewProps> = ({
             </motion.button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 rounded-2xl">
-            {otherUserId && lastOtherUserMessage && (
+            {otherUserId && otherUserHasMessages && !isOtherUserBlocked && (
               <DropdownMenuItem 
-                onClick={() => {
-                  setReportMessage(lastOtherUserMessage);
-                  setShowReportFromMenu(true);
-                }}
+                onClick={() => setShowReport(true)}
                 className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer rounded-xl"
               >
                 <Flag size={16} />
@@ -226,20 +220,6 @@ const ChatView: React.FC<ChatViewProps> = ({
                         )
                       )}
                     </div>
-
-                    {/* Report button for other's messages */}
-                    {!isOwn && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="absolute -right-9 top-1/2 -translate-y-1/2 p-2 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-destructive/15 transition-all duration-200"
-                        onClick={() => setReportMessage(message)}
-                        title="Пожаловаться"
-                      >
-                        <Flag size={14} className="text-muted-foreground hover:text-destructive transition-colors" />
-                      </motion.button>
-                    )}
                   </motion.div>
                 </motion.div>
               </React.Fragment>
@@ -256,7 +236,16 @@ const ChatView: React.FC<ChatViewProps> = ({
         onSubmit={handleSubmit} 
         className="p-4 border-t border-border bg-card"
       >
-        {!isSubscribed && remainingMessages !== Infinity && (
+        {isOtherUserBlocked && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-3 px-4 py-2.5 rounded-2xl text-xs text-center bg-destructive/15 text-destructive"
+          >
+            Пользователь заблокирован. Отправка сообщений невозможна.
+          </motion.div>
+        )}
+        {!isOtherUserBlocked && !isSubscribed && remainingMessages !== Infinity && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -287,8 +276,8 @@ const ChatView: React.FC<ChatViewProps> = ({
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Написать сообщение..."
-              disabled={remainingMessages === 0}
+              placeholder={isOtherUserBlocked ? "Отправка невозможна..." : "Написать сообщение..."}
+              disabled={remainingMessages === 0 || isOtherUserBlocked}
               className="w-full h-12 px-5 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein focus:ring-2 focus:ring-marble-vein/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
@@ -312,7 +301,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 exit={{ scale: 0, rotate: 180 }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                disabled={remainingMessages === 0}
+                disabled={remainingMessages === 0 || isOtherUserBlocked}
                 className="p-3 rounded-2xl bg-foreground text-primary-foreground hover:bg-marble-vein transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
                 <Send size={20} />
@@ -336,12 +325,10 @@ const ChatView: React.FC<ChatViewProps> = ({
       </motion.form>
 
       {/* Report Modal */}
-      {reportMessage && otherUserId && (
+      {showReport && otherUserId && (
         <ReportModal
-          isOpen={!!reportMessage}
-          onClose={() => setReportMessage(null)}
-          messageId={reportMessage.id}
-          messageContent={reportMessage.content}
+          isOpen={showReport}
+          onClose={() => setShowReport(false)}
           reportedUserId={otherUserId}
           chatId={chatId}
           reporterId={currentUserId}

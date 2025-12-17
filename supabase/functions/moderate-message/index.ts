@@ -12,24 +12,44 @@ serve(async (req) => {
   }
 
   try {
-    const { messageId, messageContent, reporterId, reportedUserId, chatId, reason } = await req.json();
+    const { reporterId, reportedUserId, chatId, reason } = await req.json();
 
     const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
     if (!OPENROUTER_API_KEY) {
       throw new Error("OPENROUTER_API_KEY is not configured");
     }
 
-    console.log("Moderating message:", messageId, "from user:", reportedUserId);
+    console.log("Moderating user:", reportedUserId, "in chat:", chatId);
 
     // Create Supabase client with service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if reported user is already blocked
+    const { data: blockedUser } = await supabase
+      .from("blocked_users")
+      .select("id")
+      .eq("user_id", reportedUserId)
+      .single();
+
+    if (blockedUser) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Пользователь уже заблокирован",
+          alreadyBlocked: true,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Get last 5 messages from the reported user in this chat
     const { data: recentMessages, error: messagesError } = await supabase
       .from("messages")
-      .select("content, created_at")
+      .select("id, content, created_at")
       .eq("chat_id", chatId)
       .eq("sender_id", reportedUserId)
       .order("created_at", { ascending: false })
@@ -39,9 +59,24 @@ serve(async (req) => {
       console.error("Error fetching recent messages:", messagesError);
     }
 
+    if (!recentMessages || recentMessages.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Нет сообщений для модерации",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Use the most recent message ID for the report
+    const messageId = recentMessages[0].id;
+
     const messagesContext = recentMessages
-      ? recentMessages.map((m, i) => `${i + 1}. "${m.content}"`).join("\n")
-      : `1. "${messageContent}"`;
+      .map((m, i) => `${i + 1}. "${m.content}"`)
+      .join("\n");
 
     console.log("Messages context for moderation:", messagesContext);
 
