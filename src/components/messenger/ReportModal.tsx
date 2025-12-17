@@ -7,8 +7,6 @@ import { toast } from "sonner";
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  messageId: string;
-  messageContent: string;
   reportedUserId: string;
   chatId: string;
   reporterId: string;
@@ -25,8 +23,6 @@ const reportReasons = [
 const ReportModal: React.FC<ReportModalProps> = ({
   isOpen,
   onClose,
-  messageId,
-  messageContent,
   reportedUserId,
   chatId,
   reporterId,
@@ -48,8 +44,6 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
       const { data, error } = await supabase.functions.invoke("moderate-message", {
         body: {
-          messageId,
-          messageContent,
           reporterId,
           reportedUserId,
           chatId,
@@ -96,7 +90,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl shadow-2xl z-50 overflow-hidden"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -117,13 +111,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="p-4 space-y-4">
-              {/* Message preview */}
-              <div className="p-4 bg-secondary/50 rounded-2xl">
-                <p className="text-xs text-muted-foreground mb-1">Сообщение:</p>
-                <p className="text-sm text-foreground line-clamp-3">{messageContent}</p>
-              </div>
-
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Reasons */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground">Причина жалобы:</p>
