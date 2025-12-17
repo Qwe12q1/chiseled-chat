@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,11 @@ const ReportModal: React.FC<ReportModalProps> = ({
   const [selectedReason, setSelectedReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async () => {
     if (!selectedReason) {
@@ -74,7 +80,9 @@ const ReportModal: React.FC<ReportModalProps> = ({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -83,14 +91,14 @@ const ReportModal: React.FC<ReportModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9998]"
           />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] bg-card border border-border rounded-3xl shadow-2xl z-[9999] overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -105,6 +113,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-secondary transition-colors"
+                aria-label="Закрыть"
               >
                 <X size={20} className="text-muted-foreground" />
               </motion.button>
@@ -134,10 +143,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
               {/* Custom reason input */}
               {selectedReason === "Другое" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                >
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
                   <textarea
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
@@ -172,7 +178,8 @@ const ReportModal: React.FC<ReportModalProps> = ({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
