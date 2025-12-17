@@ -45,11 +45,21 @@ const AuthPage: React.FC = () => {
       } else {
         const { error } = await signUp(email, password, { name, phone });
         if (error) {
-          toast({
-            title: "Ошибка регистрации",
-            description: error.message,
-            variant: "destructive",
-          });
+          const msg = error.message || "";
+          if (/already registered|user_already_exists/i.test(msg)) {
+            setMode("login");
+            toast({
+              title: "Аккаунт уже существует",
+              description: "Переключил на «Вход» — используйте этот email для авторизации.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Ошибка регистрации",
+              description: msg,
+              variant: "destructive",
+            });
+          }
         } else {
           toast({
             title: "Успешная регистрация",

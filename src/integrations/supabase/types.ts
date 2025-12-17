@@ -247,6 +247,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_private_chat: { Args: { other_user_id: string }; Returns: string }
       is_chat_member: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
