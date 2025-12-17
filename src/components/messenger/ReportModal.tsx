@@ -96,7 +96,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-sm shadow-2xl z-50 overflow-hidden"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl shadow-2xl z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -110,7 +110,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 rounded-sm hover:bg-secondary transition-colors"
+                className="p-2 rounded-xl hover:bg-secondary transition-colors"
               >
                 <X size={20} className="text-muted-foreground" />
               </motion.button>
@@ -119,7 +119,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             {/* Content */}
             <div className="p-4 space-y-4">
               {/* Message preview */}
-              <div className="p-3 bg-secondary/50 rounded-sm">
+              <div className="p-4 bg-secondary/50 rounded-2xl">
                 <p className="text-xs text-muted-foreground mb-1">Сообщение:</p>
                 <p className="text-sm text-foreground line-clamp-3">{messageContent}</p>
               </div>
@@ -133,7 +133,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => setSelectedReason(reason)}
-                    className={`w-full p-3 rounded-sm border text-left text-sm transition-all ${
+                    className={`w-full p-4 rounded-2xl border text-left text-sm transition-all ${
                       selectedReason === reason
                         ? "border-destructive bg-destructive/5 text-foreground"
                         : "border-border hover:border-muted-foreground/50 text-muted-foreground"
@@ -154,7 +154,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
                     placeholder="Опишите причину..."
-                    className="w-full h-20 p-3 bg-input border border-border rounded-sm text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-destructive"
+                    className="w-full h-20 p-4 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-destructive"
                   />
                 </motion.div>
               )}
@@ -165,7 +165,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                 whileTap={{ scale: 0.99 }}
                 onClick={handleSubmit}
                 disabled={isSubmitting || !selectedReason}
-                className="w-full flex items-center justify-center gap-2 p-4 rounded-sm bg-destructive text-primary-foreground font-medium tracking-wider hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-destructive text-primary-foreground font-medium tracking-wider hover:bg-destructive/90 transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

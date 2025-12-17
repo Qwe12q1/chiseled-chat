@@ -19,7 +19,31 @@ serve(async (req) => {
       throw new Error("OPENROUTER_API_KEY is not configured");
     }
 
-    console.log("Moderating message:", messageId);
+    console.log("Moderating message:", messageId, "from user:", reportedUserId);
+
+    // Create Supabase client with service role
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get last 5 messages from the reported user in this chat
+    const { data: recentMessages, error: messagesError } = await supabase
+      .from("messages")
+      .select("content, created_at")
+      .eq("chat_id", chatId)
+      .eq("sender_id", reportedUserId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (messagesError) {
+      console.error("Error fetching recent messages:", messagesError);
+    }
+
+    const messagesContext = recentMessages
+      ? recentMessages.map((m, i) => `${i + 1}. "${m.content}"`).join("\n")
+      : `1. "${messageContent}"`;
+
+    console.log("Messages context for moderation:", messagesContext);
 
     // Call OpenRouter for AI moderation
     const moderationResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -34,23 +58,30 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Ты модератор контента. Проанализируй сообщение и определи, нарушает ли оно правила.
+            content: `Ты модератор контента. Проанализируй последние сообщения пользователя и определи, нарушает ли он правила.
+
 Правила:
 1. Запрещены оскорбления, угрозы, дискриминация
 2. Запрещен спам и мошенничество
 3. Запрещен контент для взрослых
 4. Запрещена реклама без согласия
 
+Важно: Оценивай ВСЕ предоставленные сообщения в совокупности, чтобы понять паттерн поведения.
+
 Ответь в формате JSON:
 {
   "verdict": "block" или "warn" или "safe",
   "confidence": число от 0 до 1,
-  "reason": "краткое объяснение"
-}`
+  "reason": "краткое объяснение на русском"
+}
+
+- "block" - если есть явные серьёзные нарушения (угрозы, оскорбления, мошенничество)
+- "warn" - если есть подозрительный контент, но недостаточно для блокировки
+- "safe" - если нарушений не обнаружено`
           },
           {
             role: "user",
-            content: `Сообщение: "${messageContent}"\n\nПричина жалобы от пользователя: ${reason || "не указана"}`
+            content: `Последние сообщения пользователя, на которого поступила жалоба:\n${messagesContext}\n\nПричина жалобы от пользователя: ${reason || "не указана"}`
           }
         ],
         response_format: { type: "json_object" }
@@ -75,11 +106,6 @@ serve(async (req) => {
       console.error("Failed to parse AI response:", e);
     }
 
-    // Create Supabase client with service role
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     // Save report to database
     const { data: report, error: reportError } = await supabase
       .from("reports")
@@ -103,7 +129,7 @@ serve(async (req) => {
 
     // If verdict is "block", block the user
     if (verdict.verdict === "block" && verdict.confidence >= 0.7) {
-      console.log("Blocking user:", reportedUserId);
+      console.log("Blocking user:", reportedUserId, "reason:", verdict.reason);
 
       // Add to blocked_users
       const { error: blockError } = await supabase
