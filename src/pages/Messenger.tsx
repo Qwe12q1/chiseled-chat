@@ -274,9 +274,18 @@ const Messenger: React.FC = () => {
 
     if (chatError || !newChat) {
       console.error("handleCreateChat: chatError", chatError);
+      const details = [
+        chatError?.message,
+        (chatError as any)?.details,
+        (chatError as any)?.hint,
+        (chatError as any)?.code,
+      ]
+        .filter(Boolean)
+        .join(" • ");
+
       toast.error("Не удалось создать чат", {
         id: loadingToastId,
-        description: chatError?.message || "Попробуйте ещё раз",
+        description: details || "Попробуйте ещё раз",
       });
       return;
     }
