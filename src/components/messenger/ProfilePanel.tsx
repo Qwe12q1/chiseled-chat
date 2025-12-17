@@ -83,7 +83,7 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({ isOpen, onClose }) => {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 bottom-0 w-full max-w-sm bg-card border-r border-border shadow-2xl z-50 overflow-hidden"
+            className="fixed left-0 top-0 bottom-0 w-full max-w-sm bg-card border-r border-border shadow-2xl z-50 overflow-hidden rounded-r-3xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -94,7 +94,7 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({ isOpen, onClose }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
+                className="p-2 rounded-xl hover:bg-secondary transition-colors duration-300"
               >
                 <X size={20} className="text-muted-foreground" />
               </motion.button>
@@ -130,7 +130,7 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({ isOpen, onClose }) => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-12 px-4 bg-input border border-border rounded-sm text-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300"
+                  className="w-full h-12 px-4 bg-input border border-border rounded-2xl text-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300"
                 />
               </div>
 
@@ -142,7 +142,7 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({ isOpen, onClose }) => {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-12 px-4 bg-input border border-border rounded-sm text-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300"
+                  className="w-full h-12 px-4 bg-input border border-border rounded-2xl text-foreground focus:outline-none focus:border-marble-vein transition-colors duration-300"
                 />
               </div>
 

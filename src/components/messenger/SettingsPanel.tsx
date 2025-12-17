@@ -48,7 +48,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-card border-l border-border shadow-2xl z-50 overflow-hidden"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-card border-l border-border shadow-2xl z-50 overflow-hidden rounded-l-3xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
@@ -59,7 +59,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="p-2 rounded-sm hover:bg-secondary transition-colors duration-300"
+                className="p-2 rounded-xl hover:bg-secondary transition-colors duration-300"
               >
                 <X size={20} className="text-muted-foreground" />
               </motion.button>
@@ -70,7 +70,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={() => setShowSubscription(true)}
-              className={`mx-4 mt-4 p-4 rounded-sm border transition-all duration-300 ${
+              className={`mx-4 mt-4 p-4 rounded-2xl border transition-all duration-300 ${
                 isSubscribed
                   ? "bg-amber-500/10 border-amber-500/20"
                   : "bg-secondary border-border hover:border-amber-500/50"
@@ -100,7 +100,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="w-full flex items-center gap-4 p-4 rounded-sm hover:bg-secondary transition-colors duration-300"
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors duration-300"
                 >
                   <item.icon size={20} className="text-muted-foreground" />
                   <span className="flex-1 text-left text-foreground">{item.label}</span>
@@ -118,7 +118,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 p-4 rounded-sm bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors duration-300"
+                className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors duration-300"
               >
                 <LogOut size={20} />
                 <span className="tracking-wider text-sm">Выйти</span>

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuxuryInput } from "@/components/ui/LuxuryInput";
 import { LuxuryButton } from "@/components/ui/LuxuryButton";
-import { Phone, User, Lock, Eye, EyeOff } from "lucide-react";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -141,7 +142,7 @@ const AuthPage: React.FC = () => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <div className="absolute inset-0 bg-card backdrop-blur-xl rounded-sm border border-border shadow-2xl animate-glow-pulse" />
+        <div className="absolute inset-0 bg-card backdrop-blur-xl rounded-3xl border border-border shadow-2xl animate-glow-pulse" />
         
         <div className="relative p-10 md:p-12">
           {/* Logo/Brand */}
@@ -215,13 +216,10 @@ const AuthPage: React.FC = () => {
               className="space-y-6"
             >
               <motion.div variants={itemVariants}>
-                <LuxuryInput
+                <PhoneInput
                   label="Телефон"
-                  type="tel"
-                  icon={<Phone size={18} />}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+7 (999) 999-99-99"
+                  onChange={setPhone}
                   required
                 />
               </motion.div>

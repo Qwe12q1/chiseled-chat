@@ -29,7 +29,7 @@ const LuxuryInput = React.forwardRef<HTMLInputElement, LuxuryInputProps>(
           <input
             type={type}
             className={cn(
-              "peer w-full h-14 bg-input border border-border rounded-sm",
+              "peer w-full h-14 bg-input border border-border rounded-2xl",
               "text-foreground placeholder-transparent",
               "focus:border-marble-vein focus:ring-1 focus:ring-marble-vein/20 focus:outline-none",
               "transition-all duration-500 ease-out",
