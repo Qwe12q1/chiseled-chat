@@ -251,11 +251,23 @@ const Messenger: React.FC = () => {
       return;
     }
 
-    // Create new chat (created_by will be set by DB default = auth.uid())
+    // Proactively refresh session to avoid token-expiry RLS failures
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      console.error("handleCreateChat: refreshError", refreshError);
+      toast.error("Не удалось обновить сессию", {
+        id: loadingToastId,
+        description: "Выйдите и войдите заново, затем попробуйте снова",
+      });
+      return;
+    }
+
+    // Create new chat
     const { data: newChat, error: chatError } = await supabase
       .from("chats")
       .insert({
         type: "private",
+        created_by: authUserId,
       })
       .select()
       .single();
