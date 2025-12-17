@@ -70,13 +70,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "chat_members_chat_id_chats_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "chat_members_chat_id_fkey"
             columns: ["chat_id"]
             isOneToOne: false
