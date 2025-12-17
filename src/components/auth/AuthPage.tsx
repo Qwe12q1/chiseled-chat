@@ -137,7 +137,6 @@ const AuthPage: React.FC = () => {
   };
 
   const handleConsentComplete = (consent: boolean) => {
-    console.log("User consent:", consent);
     setShowConsentWheel(false);
     navigate("/messenger");
   };
