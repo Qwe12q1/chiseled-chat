@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, Settings, User, Ban } from "lucide-react";
+import { Search, Plus, Settings, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Chat {
@@ -20,7 +20,6 @@ interface ChatListProps {
   onSelectChat: (chatId: string) => void;
   onNewChat: () => void;
   onSettings: () => void;
-  onProfile: () => void;
 }
 
 const ChatList: React.FC<ChatListProps> = ({
@@ -29,7 +28,6 @@ const ChatList: React.FC<ChatListProps> = ({
   onSelectChat,
   onNewChat,
   onSettings,
-  onProfile,
 }) => {
   return (
     <div className="h-full flex flex-col bg-card border-r border-border">
@@ -51,14 +49,6 @@ const ChatList: React.FC<ChatListProps> = ({
               className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
             >
               <Plus size={20} className="text-muted-foreground" />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1, backgroundColor: "hsl(var(--secondary))" }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onProfile}
-              className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
-            >
-              <User size={20} className="text-muted-foreground" />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.1, backgroundColor: "hsl(var(--secondary))" }}

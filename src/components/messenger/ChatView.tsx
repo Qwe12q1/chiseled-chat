@@ -133,29 +133,31 @@ const ChatView: React.FC<ChatViewProps> = ({
           </p>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
-            >
-              <MoreVertical size={20} className="text-muted-foreground" />
-            </motion.button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 rounded-2xl">
-            {otherUserId && otherUserHasMessages && !isOtherUserBlocked && (
-              <DropdownMenuItem 
-                onClick={() => setShowReport(true)}
-                className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer rounded-xl"
+        {!isOtherUserBlocked && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
               >
-                <Flag size={16} />
-                Пожаловаться
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <MoreVertical size={20} className="text-muted-foreground" />
+              </motion.button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 rounded-2xl">
+              {otherUserId && otherUserHasMessages && (
+                <DropdownMenuItem 
+                  onClick={() => setShowReport(true)}
+                  className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer rounded-xl"
+                >
+                  <Flag size={16} />
+                  Пожаловаться
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </motion.div>
 
       {/* Messages */}
