@@ -92,7 +92,7 @@ const AuthPage: React.FC = () => {
         } else {
           toast({
             title: "Успешная регистрация",
-            description: "Добро пожаловать в NOIR",
+            description: "Добро пожаловать в MAX Core",
           });
         }
       }
@@ -173,7 +173,7 @@ const AuthPage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h1 className="font-display text-3xl md:text-4xl text-foreground tracking-wider mb-2">
-              NOIR
+              MAX Core
             </h1>
             <div className="w-12 h-[1px] bg-marble-vein mx-auto mb-3" />
             <p className="text-muted-foreground text-xs tracking-[0.3em] uppercase font-body">
@@ -328,7 +328,7 @@ const AuthPage: React.FC = () => {
 
       {/* Decorative elements */}
       <div className="absolute bottom-8 left-8 text-muted-foreground/30 text-xs tracking-[0.3em] font-body hidden md:block">
-        © 2024 NOIR
+        © 2024 MAX Core
       </div>
       <div className="absolute bottom-8 right-8 text-muted-foreground/30 text-xs tracking-[0.3em] font-body hidden md:block">
         SECURE · PRIVATE · ELEGANT

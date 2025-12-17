@@ -64,7 +64,7 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       <div className={`relative ${className}`}>
         {/* Label */}
         <motion.label
-          className="absolute left-20 text-muted-foreground pointer-events-none font-body tracking-wider origin-left z-10"
+          className="absolute left-12 text-muted-foreground pointer-events-none font-body tracking-wider origin-left z-10"
           animate={{
             y: isFocused || hasValue ? -24 : 14,
             scale: isFocused || hasValue ? 0.75 : 1,
@@ -76,12 +76,6 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
         </motion.label>
 
         <div className="relative flex items-center">
-          {/* Fixed country code display */}
-          <div className="absolute left-0 top-0 bottom-0 flex items-center gap-2 px-4 border-r border-border text-foreground rounded-l-2xl z-10 bg-secondary/30">
-            <span className="text-lg">🇷🇺</span>
-            <span className="text-sm font-medium">{DIAL_CODE}</span>
-          </div>
-
           {/* Input */}
           <input
             ref={ref}
@@ -92,11 +86,11 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
             onBlur={() => setIsFocused(false)}
             required={required}
             placeholder={isFocused ? MASK.replace(/_/g, "0") : ""}
-            className="w-full h-14 pl-28 pr-12 bg-input border border-border rounded-2xl text-foreground font-body placeholder:text-muted-foreground/50 focus:outline-none focus:border-marble-vein transition-all duration-300"
+            className="w-full h-14 pl-12 pr-12 bg-input border border-border rounded-2xl text-foreground font-body placeholder:text-muted-foreground/50 focus:outline-none focus:border-marble-vein transition-all duration-300"
           />
 
           {/* Phone icon */}
-          <div className="absolute right-4 text-muted-foreground">
+          <div className="absolute left-4 text-muted-foreground">
             <Phone size={18} />
           </div>
         </div>
