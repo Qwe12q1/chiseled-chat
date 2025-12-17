@@ -141,6 +141,11 @@ serve(async (req) => {
       console.error("Failed to parse AI response:", e);
     }
 
+    // Determine if user should be blocked
+    const shouldBlock = 
+      (verdict.verdict === "block" && verdict.confidence >= 0.7) ||
+      (verdict.verdict === "warn" && verdict.confidence >= 0.75);
+
     // Save report to database
     const { data: report, error: reportError } = await supabase
       .from("reports")
@@ -152,7 +157,7 @@ serve(async (req) => {
         reason: reason,
         ai_verdict: verdict.verdict,
         ai_confidence: verdict.confidence,
-        status: verdict.verdict === "block" ? "auto_blocked" : "pending",
+        status: shouldBlock ? "auto_blocked" : "pending",
       })
       .select()
       .single();
@@ -162,9 +167,9 @@ serve(async (req) => {
       throw reportError;
     }
 
-    // If verdict is "block", block the user
-    if (verdict.verdict === "block" && verdict.confidence >= 0.7) {
-      console.log("Blocking user:", reportedUserId, "reason:", verdict.reason);
+    // Block the user if criteria met
+    if (shouldBlock) {
+      console.log("Blocking user:", reportedUserId, "verdict:", verdict.verdict, "confidence:", verdict.confidence, "reason:", verdict.reason);
 
       // Add to blocked_users
       const { error: blockError } = await supabase
@@ -192,7 +197,7 @@ serve(async (req) => {
         verdict: verdict.verdict,
         confidence: verdict.confidence,
         reason: verdict.reason,
-        blocked: verdict.verdict === "block" && verdict.confidence >= 0.7,
+        blocked: shouldBlock,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
