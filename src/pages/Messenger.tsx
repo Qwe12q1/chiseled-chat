@@ -10,6 +10,7 @@ import EmptyChat from "@/components/messenger/EmptyChat";
 import NewChatModal from "@/components/messenger/NewChatModal";
 import SettingsPanel from "@/components/messenger/SettingsPanel";
 import ProfilePanel from "@/components/messenger/ProfilePanel";
+import BlockedUserScreen from "@/components/messenger/BlockedUserScreen";
 import { cn } from "@/lib/utils";
 
 interface Chat {
@@ -44,12 +45,43 @@ const Messenger: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<string | undefined>();
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/");
     }
   }, [user, loading, navigate]);
+
+  // Check if current user is blocked
+  useEffect(() => {
+    const checkBlockStatus = async () => {
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_blocked")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.is_blocked) {
+        // Get block reason
+        const { data: blockData } = await supabase
+          .from("blocked_users")
+          .select("reason")
+          .eq("user_id", user.id)
+          .order("blocked_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        setIsBlocked(true);
+        setBlockReason(blockData?.reason || undefined);
+      }
+    };
+
+    checkBlockStatus();
+  }, [user]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -350,6 +382,11 @@ const Messenger: React.FC = () => {
         <div className="w-8 h-8 border border-foreground/20 border-t-foreground rounded-full animate-spin" />
       </div>
     );
+  }
+
+  // Show blocked screen if user is blocked
+  if (isBlocked) {
+    return <BlockedUserScreen reason={blockReason} />;
   }
 
   return (
