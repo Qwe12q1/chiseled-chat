@@ -187,8 +187,13 @@ const Messenger: React.FC = () => {
         },
         (payload) => {
           const newMessage = payload.new as any;
-          if (newMessage.chat_id === selectedChatId) {
-            setMessages((prev) => [
+          // Add message only if not already in state (avoids duplicates from optimistic update)
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMessage.id)) {
+              return prev;
+            }
+            // Only add if it's for the current chat (check via prev messages' chat context)
+            return [
               ...prev,
               {
                 id: newMessage.id,
@@ -197,8 +202,8 @@ const Messenger: React.FC = () => {
                 timestamp: new Date(newMessage.created_at),
                 read: false,
               },
-            ]);
-          }
+            ];
+          });
           fetchChats(); // Refresh chat list for last message
         }
       )
@@ -219,13 +224,38 @@ const Messenger: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase.from("messages").insert({
-      chat_id: selectedChatId,
-      sender_id: user.id,
-      content,
-    });
+    // Insert and return the new message for optimistic update
+    const { data: newMsg, error } = await supabase
+      .from("messages")
+      .insert({
+        chat_id: selectedChatId,
+        sender_id: user.id,
+        content,
+      })
+      .select()
+      .single();
 
-    if (!error && !isSubscribed) {
+    if (error) {
+      console.error("handleSendMessage error:", error);
+      toast.error("Не удалось отправить сообщение");
+      return;
+    }
+
+    // Optimistic update: add message to local state immediately
+    if (newMsg) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: newMsg.id,
+          content: newMsg.content,
+          senderId: newMsg.sender_id || "",
+          timestamp: new Date(newMsg.created_at),
+          read: false,
+        },
+      ]);
+    }
+
+    if (!isSubscribed) {
       await incrementMessageCount();
     }
   };
