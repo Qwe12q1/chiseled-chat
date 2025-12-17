@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import ConsentWheel from "./ConsentWheel";
 
 type AuthMode = "login" | "register";
 
@@ -19,18 +18,16 @@ const AuthPage: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [showConsentWheel, setShowConsentWheel] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Only navigate if user exists and consent wheel is not showing
-    if (user && !showConsentWheel) {
+    if (user) {
       navigate("/messenger");
     }
-  }, [user, navigate, showConsentWheel]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +94,6 @@ const AuthPage: React.FC = () => {
             title: "Успешная регистрация",
             description: "Добро пожаловать в MAX Core",
           });
-          // Show consent wheel after successful registration
-          setShowConsentWheel(true);
         }
       }
     } catch (error) {
@@ -136,16 +131,8 @@ const AuthPage: React.FC = () => {
     exit: { opacity: 0, y: -20 },
   };
 
-  const handleConsentComplete = (consent: boolean) => {
-    setShowConsentWheel(false);
-    navigate("/messenger");
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Consent Wheel */}
-      <ConsentWheel isOpen={showConsentWheel} onComplete={handleConsentComplete} />
-
       {/* Marble texture background */}
       <div className="absolute inset-0 marble-texture opacity-30" />
       <div className="absolute inset-0 marble-veins" />

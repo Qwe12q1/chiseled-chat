@@ -41,7 +41,7 @@ const ChatList: React.FC<ChatListProps> = ({
             animate={{ opacity: 1, x: 0 }}
             className="font-display text-xl tracking-wider text-foreground"
           >
-            NOIR
+            MAX Core
           </motion.h1>
           <div className="flex items-center gap-1">
             <motion.button

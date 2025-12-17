@@ -94,7 +94,7 @@ const SubscriptionPanel: React.FC<SubscriptionPanelProps> = ({ isOpen, onClose }
               <div className="flex items-center gap-2">
                 <Crown className="text-amber-500" size={24} />
                 <h2 className="font-display text-lg tracking-wider text-foreground">
-                  NOIR Premium
+                  MAX Core Premium
                 </h2>
               </div>
               <motion.button
