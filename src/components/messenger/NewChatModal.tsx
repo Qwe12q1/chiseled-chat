@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Search, UserPlus } from "lucide-react";
+import { X, Search, UserPlus, AtSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -8,6 +8,7 @@ interface Profile {
   id: string;
   name: string;
   phone: string;
+  username: string | null;
   avatar_url: string | null;
   status: string;
 }
@@ -20,33 +21,46 @@ interface NewChatModalProps {
 
 const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateChat }) => {
   const [search, setSearch] = useState("");
-  const [users, setUsers] = useState<Profile[]>([]);
+  const [foundUser, setFoundUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchUsers();
-    }
-  }, [isOpen]);
-
-  const fetchUsers = async () => {
+  const handleSearch = async () => {
+    if (!search.trim()) return;
+    
     setLoading(true);
+    setSearched(true);
+    
+    // Search by exact username match (case-insensitive)
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .neq("id", user?.id || "");
+      .ilike("username", search.trim())
+      .neq("id", user?.id || "")
+      .maybeSingle();
     
     if (!error && data) {
-      setUsers(data);
+      setFoundUser(data);
+    } else {
+      setFoundUser(null);
     }
     setLoading(false);
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.phone.includes(search)
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearch();
+    }
+  };
+
+  const handleClose = () => {
+    setSearch("");
+    setFoundUser(null);
+    setSearched(false);
+    onClose();
+  };
 
   return (
     <AnimatePresence>
@@ -57,7 +71,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
           />
 
@@ -82,7 +96,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={onClose}
+                onClick={handleClose}
                 className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-300"
               >
                 <X size={20} className="text-muted-foreground" />
@@ -95,60 +109,78 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15 }}
-                className="relative"
+                className="relative flex gap-2"
               >
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Поиск по имени или телефону..."
-                  className="w-full h-12 pl-11 pr-4 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein focus:ring-2 focus:ring-marble-vein/20 transition-all duration-300"
-                />
+                <div className="relative flex-1">
+                  <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Введите username..."
+                    className="w-full h-12 pl-11 pr-4 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein focus:ring-2 focus:ring-marble-vein/20 transition-all duration-300"
+                  />
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSearch}
+                  disabled={loading || !search.trim()}
+                  className="h-12 px-4 bg-foreground text-background rounded-2xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                >
+                  <Search size={18} />
+                </motion.button>
               </motion.div>
+              <p className="text-xs text-muted-foreground mt-2 pl-1">
+                Поиск по точному совпадению username
+              </p>
             </div>
 
-            {/* Users list */}
-            <div className="max-h-[50vh] overflow-y-auto">
+            {/* Result */}
+            <div className="min-h-[120px] pb-4">
               {loading ? (
                 <div className="p-8 text-center">
                   <div className="w-8 h-8 border border-foreground/20 border-t-foreground rounded-full animate-spin mx-auto" />
                 </div>
-              ) : filteredUsers.length === 0 ? (
+              ) : searched && !foundUser ? (
                 <div className="p-8 text-center">
                   <UserPlus size={32} className="text-muted-foreground mx-auto mb-2" />
                   <p className="text-muted-foreground text-sm">
-                    {search ? "Пользователи не найдены" : "Нет доступных пользователей"}
+                    Пользователь не найден
                   </p>
                 </div>
-              ) : (
-                filteredUsers.map((profile, index) => (
-                  <motion.div
-                    key={profile.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.02, x: 4, backgroundColor: "hsl(var(--secondary))" }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => onCreateChat(profile.id)}
-                    className="flex items-center gap-3 p-4 mx-2 mb-1 cursor-pointer transition-all duration-300 rounded-2xl"
+              ) : foundUser ? (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.02, x: 4, backgroundColor: "hsl(var(--secondary))" }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onCreateChat(foundUser.id)}
+                  className="flex items-center gap-3 p-4 mx-2 cursor-pointer transition-all duration-300 rounded-2xl"
+                >
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    className="w-12 h-12 rounded-2xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center text-foreground font-display text-lg overflow-hidden shadow-sm"
                   >
-                    <motion.div 
-                      whileHover={{ scale: 1.1 }}
-                      className="w-12 h-12 rounded-2xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center text-foreground font-display text-lg overflow-hidden shadow-sm"
-                    >
-                      {profile.avatar_url ? (
-                        <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
-                      ) : (
-                        profile.name.charAt(0).toUpperCase()
-                      )}
-                    </motion.div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{profile.name}</p>
-                      <p className="text-sm text-muted-foreground">{profile.phone}</p>
-                    </div>
+                    {foundUser.avatar_url ? (
+                      <img src={foundUser.avatar_url} alt={foundUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      foundUser.name.charAt(0).toUpperCase()
+                    )}
                   </motion.div>
-                ))
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{foundUser.name}</p>
+                    <p className="text-sm text-muted-foreground">@{foundUser.username}</p>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="p-8 text-center">
+                  <AtSign size={32} className="text-muted-foreground/50 mx-auto mb-2" />
+                  <p className="text-muted-foreground/70 text-sm">
+                    Введите username для поиска
+                  </p>
+                </div>
               )}
             </div>
           </motion.div>

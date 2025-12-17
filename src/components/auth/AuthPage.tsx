@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LuxuryInput } from "@/components/ui/LuxuryInput";
 import { LuxuryButton } from "@/components/ui/LuxuryButton";
 import { PhoneInput } from "@/components/ui/PhoneInput";
-import { User, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Eye, EyeOff, AtSign } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ const AuthPage: React.FC = () => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -71,8 +72,27 @@ const AuthPage: React.FC = () => {
           setIsLoading(false);
           return;
         }
+
+        // Check if username is taken
+        if (username.trim()) {
+          const { data: existingUsername } = await supabase
+            .from("profiles")
+            .select("id")
+            .ilike("username", username.trim())
+            .maybeSingle();
+            
+          if (existingUsername) {
+            toast({
+              title: "Username занят",
+              description: "Этот username уже используется. Выберите другой.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
         
-        const { error } = await signUp(phone, password, { name });
+        const { error } = await signUp(phone, password, { name, username: username.trim() || null });
         if (error) {
           const msg = error.message || "";
           if (/already registered|user_already_exists/i.test(msg)) {
@@ -245,16 +265,29 @@ const AuthPage: React.FC = () => {
               </motion.div>
 
               {mode === "register" && (
-                <motion.div variants={itemVariants}>
-                  <LuxuryInput
-                    label="Имя"
-                    type="text"
-                    icon={<User size={18} />}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </motion.div>
+                <>
+                  <motion.div variants={itemVariants}>
+                    <LuxuryInput
+                      label="Имя"
+                      type="text"
+                      icon={<User size={18} />}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                  </motion.div>
+                  <motion.div variants={itemVariants}>
+                    <LuxuryInput
+                      label="Username"
+                      type="text"
+                      icon={<AtSign size={18} />}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                      placeholder="username"
+                      required
+                    />
+                  </motion.div>
+                </>
               )}
 
               <motion.div variants={itemVariants} className="relative">
