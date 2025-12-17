@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface ConsentWheelProps {
@@ -6,21 +6,26 @@ interface ConsentWheelProps {
   onComplete: (consent: boolean) => void;
 }
 
-const SPIN_MS = 4000;
-const MARGIN_DEG = 18;
-
-const mod360 = (n: number) => ((n % 360) + 360) % 360;
+// Константы для настройки
+const SPIN_DURATION = 4; // секунды
+const MIN_SPINS = 5; // минимальное кол-во полных оборотов
+const SECTOR_MARGIN = 20; // отступ от границ сектора (чтобы стрелка не попала на линию)
 
 const ConsentWheel: React.FC<ConsentWheelProps> = ({ isOpen, onComplete }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<boolean | null>(null);
-  const [rotation, setRotation] = useState(0);
+  
+  // Используем ref для текущего угла, чтобы вращение всегда продолжалось с места остановки
+  const currentRotation = useRef(0);
 
-  const gradient = useMemo(() => {
-    // Yes: right half (0-180), No: left half (180-360)
-    // Use design tokens (HSL) for colors.
-    // `from -90deg` ensures the gradient starts at the top (under the pointer) consistently.
-    return `conic-gradient(from -90deg, hsl(var(--primary)) 0deg 180deg, hsl(var(--destructive)) 180deg 360deg)`;
+  // Генерируем градиент один раз. 
+  // Сектор ДА (0-180deg), Сектор НЕТ (180-360deg)
+  // Мы поворачиваем сам градиент на -90deg, чтобы 0deg был ровно СВЕРХУ.
+  const wheelBackground = useMemo(() => {
+    return `conic-gradient(from -90deg, 
+      hsl(var(--primary)) 0deg 180deg, 
+      hsl(var(--destructive)) 180deg 360deg
+    )`;
   }, []);
 
   const spin = () => {
@@ -29,26 +34,43 @@ const ConsentWheel: React.FC<ConsentWheelProps> = ({ isOpen, onComplete }) => {
     setIsSpinning(true);
     setResult(null);
 
-    // 99% Yes, 1% No
+    // 1. Определяем результат заранее (99% ДА, 1% НЕТ)
     const isYes = Math.random() < 0.99;
 
-    // Keep the pointer away from the boundary (center of the sector)
-    const desiredRemainder = isYes
-      ? 180 + MARGIN_DEG + Math.random() * (180 - MARGIN_DEG * 2) // 198..342 (lands on YES)
-      : MARGIN_DEG + Math.random() * (180 - MARGIN_DEG * 2); // 18..162 (lands on NO)
+    // 2. Выбираем случайную точку внутри целевого сектора
+    // Сектор "ДА" занимает 0..180 градусов.
+    // Сектор "НЕТ" занимает 180..360 градусов.
+    const minAngle = isYes ? 0 : 180;
+    const maxAngle = isYes ? 180 : 360;
 
-    const currentRemainder = mod360(rotation);
-    const deltaToDesired = mod360(desiredRemainder - currentRemainder);
+    // Генерируем случайный угол внутри сектора с учетом отступов (чтобы не попало на границу)
+    const randomAngleInSector = 
+      Math.random() * (maxAngle - minAngle - SECTOR_MARGIN * 2) + minAngle + SECTOR_MARGIN;
 
-    // 5-8 full rotations + adjust to land precisely
-    const fullRotations = (5 + Math.random() * 3) * 360;
+    // 3. Магия математики
+    // Чтобы угол X оказался под стрелкой (которая наверху, на 0°), 
+    // нам нужно повернуть колесо назад на этот угол (или вперед на 360 - X).
+    const targetRotation = 360 - randomAngleInSector;
 
-    setRotation((prev) => prev + fullRotations + deltaToDesired);
+    // Добавляем полные обороты для эффектности
+    const fullSpins = 360 * MIN_SPINS; 
+    
+    // Также добавляем случайное кол-во дополнительных оборотов (0-2) для вариативности
+    const randomSpins = Math.floor(Math.random() * 3) * 360;
 
-    window.setTimeout(() => {
+    // Считаем новый абсолютный угол поворота (текущий + новый)
+    // Важно: мы прибавляем к предыдущему значению, чтобы колесо не дергалось назад
+    const previousRotationMod = currentRotation.current % 360;
+    const distanceToNextPosition = targetRotation - previousRotationMod + fullSpins + randomSpins;
+    
+    // Обновляем ref
+    currentRotation.current += distanceToNextPosition;
+
+    // 4. Таймер завершения
+    setTimeout(() => {
       setIsSpinning(false);
       setResult(isYes);
-    }, SPIN_MS);
+    }, SPIN_DURATION * 1000);
   };
 
   const handleContinue = () => {
@@ -63,123 +85,122 @@ const ConsentWheel: React.FC<ConsentWheelProps> = ({ isOpen, onComplete }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-background/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6"
+          className="fixed inset-0 bg-background/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 overflow-hidden"
         >
-          {/* Title */}
+          {/* Заголовок */}
           <motion.div
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-center mb-8"
+            className="text-center mb-10"
           >
-            <h2 className="font-display text-xl md:text-2xl text-foreground tracking-wider mb-3">
-              Согласие на обработку данных
+            <h2 className="text-2xl font-bold tracking-tight mb-2">
+              Согласие на обработку
             </h2>
-            <p className="text-muted-foreground text-sm max-w-sm">
-              Даёте ли вы согласие на обработку персональных данных в рекламных целях?
+            <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+              Испытайте удачу! Даёте ли вы согласие на обработку данных?
             </p>
           </motion.div>
 
-          {/* Wheel */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-            className="relative mb-8"
-          >
-            {/* Pointer */}
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
-              <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-foreground" />
+          {/* Контейнер колеса */}
+          <div className="relative mb-12">
+            {/* Стрелка-указатель (статичная, поверх колеса) */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 drop-shadow-lg">
+              <div className="w-0 h-0 
+                border-l-[16px] border-l-transparent 
+                border-r-[16px] border-r-transparent 
+                border-t-[24px] border-t-foreground" 
+              />
             </div>
 
-            <div className="relative w-56 h-56 md:w-64 md:h-64">
-              <motion.div
-                className="w-full h-full rounded-full border-4 border-foreground overflow-hidden shadow-2xl"
-                style={{ backgroundImage: gradient }}
-                animate={{ rotate: rotation }}
-                transition={{ duration: SPIN_MS / 1000, ease: [0.2, 0.8, 0.3, 1] }}
-              />
-
-              {/* Labels */}
-              <div className="pointer-events-none absolute inset-0">
-                <div className="absolute top-1/2 right-[18%] -translate-y-1/2">
-                  <span className="font-display text-2xl tracking-wider text-primary-foreground rotate-90 inline-block">
-                    ДА
-                  </span>
-                </div>
-                <div className="absolute top-1/2 left-[18%] -translate-y-1/2">
-                  <span className="font-display text-2xl tracking-wider text-primary-foreground -rotate-90 inline-block">
-                    НЕТ
-                  </span>
-                </div>
+            {/* Само вращающееся колесо */}
+            <motion.div
+              className="w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-foreground shadow-2xl relative overflow-hidden"
+              style={{ backgroundImage: wheelBackground }}
+              animate={{ rotate: currentRotation.current }}
+              transition={{ 
+                duration: SPIN_DURATION, 
+                ease: [0.15, 0, 0.15, 1] // Custom bezier для реалистичного замедления (spin-down)
+              }}
+            >
+              {/* Текстовые метки внутри колеса. Они крутятся вместе с ним. */}
+              
+              {/* Метка ДА (центр сектора 0-180 -> 90 градусов) */}
+              <div 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-right pr-8"
+                style={{ transform: 'translate(-50%, -50%) rotate(-90deg)' }}
+              >
+                 {/* rotate(-90deg) ставит текст поперек радиуса, чтобы читалось по кругу */}
+                <span className="text-3xl font-bold text-primary-foreground drop-shadow-md select-none">
+                  ДА
+                </span>
               </div>
 
-              {/* Center */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-foreground border-4 border-background z-10" />
-            </div>
-          </motion.div>
-
-          {/* Result display */}
-          <AnimatePresence mode="wait">
-            {result !== null && !isSpinning && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className={`mb-6 px-6 py-3 rounded-2xl ${
-                  result
-                    ? "bg-primary/15 text-foreground"
-                    : "bg-destructive/15 text-foreground"
-                }`}
+              {/* Метка НЕТ (центр сектора 180-360 -> 270 градусов) */}
+              <div 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-left pl-8"
+                style={{ transform: 'translate(-50%, -50%) rotate(-90deg)' }}
               >
-                <span className="font-display text-lg tracking-wider">
-                  Выпало: {result ? "ДА" : "НЕТ"}
+                <span className="text-3xl font-bold text-primary-foreground drop-shadow-md select-none">
+                  НЕТ
                 </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </motion.div>
+            
+            {/* Центральная заглушка (ось) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-background rounded-full border-4 border-foreground z-10 shadow-inner flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+            </div>
+          </div>
 
-          {/* Buttons */}
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex flex-col gap-3 w-full max-w-xs"
-          >
+          {/* Результат и кнопки */}
+          <div className="w-full max-w-xs space-y-4 min-h-[140px]">
+            <AnimatePresence mode="wait">
+              {result !== null && !isSpinning ? (
+                <motion.div
+                  key="result"
+                  initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className={`p-4 rounded-xl text-center border ${
+                    result 
+                      ? "bg-primary/10 border-primary/20 text-primary" 
+                      : "bg-destructive/10 border-destructive/20 text-destructive"
+                  }`}
+                >
+                  <p className="font-medium text-lg">
+                    Выпало: {result ? "ДА" : "НЕТ"}
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div key="placeholder" className="h-[62px]" /> // Placeholder чтобы кнопки не прыгали
+              )}
+            </AnimatePresence>
+
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={spin}
+              onClick={result !== null ? handleContinue : spin}
               disabled={isSpinning}
-              className={`w-full h-14 rounded-2xl font-display tracking-wider text-sm uppercase transition-all duration-300 ${
-                isSpinning
-                  ? "bg-muted text-muted-foreground cursor-not-allowed"
-                  : "bg-foreground text-background hover:bg-foreground/90"
+              className={`w-full h-12 rounded-lg font-medium tracking-wide transition-colors ${
+                result !== null
+                 ? "bg-foreground text-background hover:bg-foreground/90" // Стиль кнопки "Продолжить"
+                 : isSpinning
+                    ? "bg-muted text-muted-foreground cursor-not-allowed" // Стиль когда крутится
+                    : "bg-primary text-primary-foreground hover:bg-primary/90" // Стиль кнопки "Крутить"
               }`}
             >
-              {isSpinning ? "Крутится..." : "Крутить"}
+              {isSpinning 
+                ? "Крутится..." 
+                : result !== null 
+                  ? "Продолжить" 
+                  : "Крутить колесо"}
             </motion.button>
+          </div>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleContinue}
-              disabled={isSpinning || result === null}
-              className="w-full h-12 rounded-2xl border border-border font-body tracking-wider text-sm text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Продолжить
-            </motion.button>
-          </motion.div>
-
-          {/* Fine print */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-6 text-xs text-muted-foreground/50 text-center max-w-xs"
-          >
-            Результат носит исключительно развлекательный характер
-          </motion.p>
+          <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-widest opacity-50">
+            Развлекательный контент
+          </p>
         </motion.div>
       )}
     </AnimatePresence>
@@ -187,4 +208,4 @@ const ConsentWheel: React.FC<ConsentWheelProps> = ({ isOpen, onComplete }) => {
 };
 
 export default ConsentWheel;
-
+            
