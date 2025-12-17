@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuxuryInput } from "@/components/ui/LuxuryInput";
 import { LuxuryButton } from "@/components/ui/LuxuryButton";
-import { Phone, User, Lock, Eye, EyeOff, Mail } from "lucide-react";
+import { Phone, User, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -13,10 +13,9 @@ const AuthPage: React.FC = () => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -34,7 +33,7 @@ const AuthPage: React.FC = () => {
 
     try {
       if (mode === "login") {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(phone, password);
         if (error) {
           toast({
             title: "Ошибка входа",
@@ -43,14 +42,23 @@ const AuthPage: React.FC = () => {
           });
         }
       } else {
-        const { error } = await signUp(email, password, { name, phone });
+        if (!phone.trim()) {
+          toast({
+            title: "Ошибка",
+            description: "Введите номер телефона",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        const { error } = await signUp(phone, password, { name });
         if (error) {
           const msg = error.message || "";
           if (/already registered|user_already_exists/i.test(msg)) {
             setMode("login");
             toast({
               title: "Аккаунт уже существует",
-              description: "Переключил на «Вход» — используйте этот email для авторизации.",
+              description: "Переключил на «Вход» — используйте этот телефон для авторизации.",
               variant: "destructive",
             });
           } else {
@@ -208,38 +216,27 @@ const AuthPage: React.FC = () => {
             >
               <motion.div variants={itemVariants}>
                 <LuxuryInput
-                  label="Email"
-                  type="email"
-                  icon={<Mail size={18} />}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  label="Телефон"
+                  type="tel"
+                  icon={<Phone size={18} />}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+7 (999) 999-99-99"
                   required
                 />
               </motion.div>
 
               {mode === "register" && (
-                <>
-                  <motion.div variants={itemVariants}>
-                    <LuxuryInput
-                      label="Имя"
-                      type="text"
-                      icon={<User size={18} />}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </motion.div>
-                  <motion.div variants={itemVariants}>
-                    <LuxuryInput
-                      label="Телефон"
-                      type="tel"
-                      icon={<Phone size={18} />}
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+7 (999) 999-99-99"
-                    />
-                  </motion.div>
-                </>
+                <motion.div variants={itemVariants}>
+                  <LuxuryInput
+                    label="Имя"
+                    type="text"
+                    icon={<User size={18} />}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </motion.div>
               )}
 
               <motion.div variants={itemVariants} className="relative">
