@@ -13,34 +13,36 @@ interface PhoneInputProps {
 const DIAL_CODE = "+7";
 const MASK = "(___) ___-__-__";
 
+// Move function outside component to avoid hoisting issues
+const formatWithMask = (input: string): string => {
+  const digits = input.replace(/\D/g, "");
+  let result = "";
+  let digitIndex = 0;
+
+  for (let i = 0; i < MASK.length && digitIndex < digits.length; i++) {
+    if (MASK[i] === "_") {
+      result += digits[digitIndex];
+      digitIndex++;
+    } else {
+      result += MASK[i];
+    }
+  }
+
+  return result;
+};
+
+const getInitialDisplayValue = (value: string): string => {
+  if (value && value.startsWith(DIAL_CODE)) {
+    const numberPart = value.slice(DIAL_CODE.length);
+    return formatWithMask(numberPart);
+  }
+  return "";
+};
+
 const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
   ({ value, onChange, label = "Телефон", required, className }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
-    const [displayValue, setDisplayValue] = useState(() => {
-      // Initialize from existing value if present
-      if (value && value.startsWith(DIAL_CODE)) {
-        const numberPart = value.slice(DIAL_CODE.length);
-        return formatWithMask(numberPart);
-      }
-      return "";
-    });
-
-    const formatWithMask = (input: string): string => {
-      const digits = input.replace(/\D/g, "");
-      let result = "";
-      let digitIndex = 0;
-
-      for (let i = 0; i < MASK.length && digitIndex < digits.length; i++) {
-        if (MASK[i] === "_") {
-          result += digits[digitIndex];
-          digitIndex++;
-        } else {
-          result += MASK[i];
-        }
-      }
-
-      return result;
-    };
+    const [displayValue, setDisplayValue] = useState(() => getInitialDisplayValue(value));
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const inputValue = e.target.value;
