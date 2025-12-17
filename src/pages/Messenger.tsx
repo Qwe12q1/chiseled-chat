@@ -9,7 +9,6 @@ import ChatView from "@/components/messenger/ChatView";
 import EmptyChat from "@/components/messenger/EmptyChat";
 import NewChatModal from "@/components/messenger/NewChatModal";
 import SettingsPanel from "@/components/messenger/SettingsPanel";
-import ProfilePanel from "@/components/messenger/ProfilePanel";
 import BlockedUserScreen from "@/components/messenger/BlockedUserScreen";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +42,6 @@ const Messenger: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [showNewChat, setShowNewChat] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockReason, setBlockReason] = useState<string | undefined>();
@@ -408,7 +406,6 @@ const Messenger: React.FC = () => {
           onSelectChat={setSelectedChatId}
           onNewChat={() => setShowNewChat(true)}
           onSettings={() => setShowSettings(true)}
-          onProfile={() => setShowProfile(true)}
         />
       </div>
 
@@ -448,10 +445,6 @@ const Messenger: React.FC = () => {
       <SettingsPanel
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-      />
-      <ProfilePanel
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
       />
     </div>
   );

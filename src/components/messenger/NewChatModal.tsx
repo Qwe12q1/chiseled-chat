@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Search, UserPlus, AtSign } from "lucide-react";
+import { X, Search, UserPlus, AtSign, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -19,8 +19,11 @@ interface NewChatModalProps {
   onCreateChat: (userId: string) => void;
 }
 
+type SearchMode = "username" | "phone";
+
 const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateChat }) => {
   const [search, setSearch] = useState("");
+  const [searchMode, setSearchMode] = useState<SearchMode>("username");
   const [foundUser, setFoundUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -32,13 +35,18 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
     setLoading(true);
     setSearched(true);
     
-    // Search by exact username match (case-insensitive)
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .ilike("username", search.trim())
-      .neq("id", user?.id || "")
-      .maybeSingle();
+    let query = supabase.from("profiles").select("*").neq("id", user?.id || "");
+    
+    if (searchMode === "username") {
+      // Search by exact username match (case-insensitive)
+      query = query.ilike("username", search.trim());
+    } else {
+      // Search by phone - clean up input and search
+      const cleanPhone = search.trim().replace(/[\s\-\(\)]/g, "");
+      query = query.eq("phone", cleanPhone);
+    }
+    
+    const { data, error } = await query.maybeSingle();
     
     if (!error && data) {
       setFoundUser(data);
@@ -60,6 +68,13 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
     setFoundUser(null);
     setSearched(false);
     onClose();
+  };
+
+  const handleModeChange = (mode: SearchMode) => {
+    setSearchMode(mode);
+    setSearch("");
+    setFoundUser(null);
+    setSearched(false);
   };
 
   return (
@@ -103,6 +118,36 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
               </motion.button>
             </div>
 
+            {/* Mode Tabs */}
+            <div className="px-4 pt-4">
+              <div className="flex gap-2 p-1 bg-secondary/50 rounded-2xl">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleModeChange("username")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    searchMode === "username"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <AtSign size={16} />
+                  Username
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleModeChange("phone")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    searchMode === "phone"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Phone size={16} />
+                  Телефон
+                </motion.button>
+              </div>
+            </div>
+
             {/* Search */}
             <div className="p-4">
               <motion.div 
@@ -112,13 +157,17 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
                 className="relative flex gap-2"
               >
                 <div className="relative flex-1">
-                  <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  {searchMode === "username" ? (
+                    <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  ) : (
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  )}
                   <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Введите username..."
+                    placeholder={searchMode === "username" ? "Введите username..." : "+7XXXXXXXXXX"}
                     className="w-full h-12 pl-11 pr-4 bg-input border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-marble-vein focus:ring-2 focus:ring-marble-vein/20 transition-all duration-300"
                   />
                 </div>
@@ -133,7 +182,10 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
                 </motion.button>
               </motion.div>
               <p className="text-xs text-muted-foreground mt-2 pl-1">
-                Поиск по точному совпадению username
+                {searchMode === "username" 
+                  ? "Поиск по точному совпадению username"
+                  : "Введите номер телефона в формате +7XXXXXXXXXX"
+                }
               </p>
             </div>
 
@@ -171,14 +223,23 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onCreateCh
                   </motion.div>
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{foundUser.name}</p>
-                    <p className="text-sm text-muted-foreground">@{foundUser.username}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {foundUser.username ? `@${foundUser.username}` : foundUser.phone}
+                    </p>
                   </div>
                 </motion.div>
               ) : (
                 <div className="p-8 text-center">
-                  <AtSign size={32} className="text-muted-foreground/50 mx-auto mb-2" />
+                  {searchMode === "username" ? (
+                    <AtSign size={32} className="text-muted-foreground/50 mx-auto mb-2" />
+                  ) : (
+                    <Phone size={32} className="text-muted-foreground/50 mx-auto mb-2" />
+                  )}
                   <p className="text-muted-foreground/70 text-sm">
-                    Введите username для поиска
+                    {searchMode === "username" 
+                      ? "Введите username для поиска"
+                      : "Введите номер телефона для поиска"
+                    }
                   </p>
                 </div>
               )}
